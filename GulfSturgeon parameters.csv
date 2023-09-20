@@ -2,7 +2,7 @@ Parameter,Value,Definition
 R0,67,unfished recruitment at equilibrium
 reck,2.8,recruitment compensation ratio - the difference in juvenile survival between unfished and near zero density
 K,0.13,von Bertalanffy 'growth' parameter
-Madult,0.0627,mortality of fish at Linf
+Madult,0.1627,mortality of fish at Linf
 lh,0.27,length at 50% capture probability (as a proportion of Linf)
 lsd,0.045,slope of logistic function at 50% capture probability
 afec,1,fecundity multiplier on weight
