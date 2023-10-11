@@ -40,13 +40,15 @@ library(fields)
   #   and the number of simulations (n.sim)
   # parameters is a list of all parameters
 
+  #M=.05
+  #No=500
+  
   nT <- controls$nT
   n.sim <- controls$n.sim
   A <- controls$A
   nS <- controls$nS
   AR <- controls$AR
   h.st <- controls$h.st
-#  TP.st <- controls$TP.st
 #  ep.fr <-epi.fr
   ep.fr <- controls$ep.fr
   ep.J.M <- controls$ep.J.M
@@ -55,7 +57,6 @@ library(fields)
   recfail <- controls$recfail
   ep.fec <- controls$ep.fec
   opt <- controls$opt
-#  habitat <- controls$habitat
 
   R0 <- parameters$R0           # unfished equilibrium recruitment
   reck <- parameters$reck       # recruitment compensation ratio
@@ -73,9 +74,12 @@ library(fields)
   sd.S <- parameters$sd.S       # standard deviation of environmental effect on survival
 
   # define the relative change in spawning habitat
-  lam <- mapply('/',habitat,habitat[1,1:nS])
+  #lam <- mapply('/',habitat,habitat[1,1:nS])
+  #lam is defined below to allow s-r function to work without definition of habitat changes
+  lam=c(1,1)
 
-  # define stanza-specific recruitment parameters
+  
+  
   age <- AR:A                                     # ages
   la <- (1-exp(-K*age))                           # unfished mean length-at-age
   wa <- la^3                                      # unfished mean weight-at-age
@@ -92,13 +96,15 @@ library(fields)
   N1 <- sum(Rinit*lx)                             # initial abundance
   
   # stanza-specific recruitment parameters
-  A.s <- exp(log(R.A)*Ms/sum(Ms))                  # maximum survival for each stanza
-  A.s.temp <- c(1,A.s)
-  den <- vector()
-  for(i in 1:nS)
-    den[i] <- Bs[i]*prod(A.s.temp[1:i])
-  B.s <- Bs*R.B/sum(den)                           # carrying capacity parameter for each stanza
- 
+  #A.s <- exp(log(R.A)*Ms/sum(Ms))                  # maximum survival for each stanza
+  A.s <- R.A                 # maximum survival for each stanza
+  B.s <- R.B
+  #A.s.temp <- c(1,A.s)
+  #den <- vector()
+  #for(i in 1:nS)
+    #den[i] <- Bs[i]*prod(A.s.temp[1:i])
+  #B.s <- Bs*R.B/sum(den)                           # carrying capacity parameter for each stanza
+
   # initialize population
   Nt <- array(dim=c(nT,A,n.sim))                   # numbers at time and age for each simulation
   Et <- matrix(nrow=nT,ncol=n.sim)                 # eggs for each year in each simulation
@@ -108,7 +114,7 @@ library(fields)
   Et[1,] <- as.integer(colSums(sweep(Nt[1,AR:A,],MARGIN=1,fec,'*')))      # eggs produced in first year
   W.st <- rnorm(nS*nT*n.sim,0,sd.S)
   anom <- array(data=exp(W.st),dim=c(nT,nS,n.sim))  # survival anomolies for each stanza
-  A.s <- A.s*(1-h.st)                       # remove fish for translocation
+  #A.s <- A.s*(1-h.st)                       # remove fish for translocation
   B.st <- B.s/t(lam)
 
   if(ep.fr <= nT){
@@ -142,14 +148,25 @@ library(fields)
     N.st <- matrix(nrow=nS+1,ncol=n.sim)    # numbers surviving through each stanza in a year
     N.st[1,] <- Et[t-1,]
     for(st in 1:nS){
-      N.st[st,] <- N.st[st,]*rec.mult + TP.st[t,st]  # add stocked fish 
-      N.st[st+1,] <- rbinom(n.sim,as.integer(pmax(0,N.st[st,])),pmin(A.s[st]*anom[t,st,]/(1+B.st[st,t]*N.st[st,]),1))
+      N.st[st,] <- N.st[st,]*rec.mult # + TP.st[t]  # spring cold recruitment reductions# add stocked fish 
+      N.st[st+1,] <- rbinom(n.sim,as.integer(pmax(0,N.st[st,])),pmin(A.s[st]*anom[t,st,]/(1+B.st[st,nS]*N.st[st,]),1))
     }
     Nt[t,AR,] <- as.integer(N.st[nS+1,]*ep.S[1,])       # numbers surviving through all stanzas become recruits to the population
     for(i in 1:n.sim)
       Nt[t,(AR+1):A,i] <- rbinom(A-AR,pmax(0,Nt[t-1,AR:(A-1),i]),Sa[1:(A-AR)]*ep.S[2:(A-AR+1),i])  # survive fish to the next age
     Et[t,] <- as.integer(colSums(sweep(Nt[t,AR:A,],MARGIN=1,fec,'*')))*fec.mult
   }
+  
+    # plot(rowSums(Nt[,,10]),ylim=c(0,2000),type='l')
+    # plot(as.vector(Nt[100:nT,1,]),ylim=c(0,1000))
+    # mean(as.vector(Nt[100:nT,1,]))
+    # mean(as.vector(Nt[100:nT,4,]))
+    # mean(rowSums(Nt[100:nT,,]))/n.sim
+  
+  
+  
+  
+  
   p.extinct.50 <- NA
   p.extinct.100 <- NA
   p.extinct.200 <- NA
@@ -191,10 +208,6 @@ cat("Or, type 'heat.proj() to plot base results.\n")
 cat("New scenarios can be run by altering available habitat or changing controls in appropriate *.csv files.\n")
 cat("New species or populations can be evaluated by changing parameters in appropriate *.csv files.\n")
 #
-controls <- list()
-parameters <- list()
-habitat <- list()
-TP.st <- list()
 
 getLHpars <- function(LHdf=NULL){
   parNames <- LHdf$Parameter
@@ -210,25 +223,21 @@ getLHpars <- function(LHdf=NULL){
 }
 
 "set.pars" <- function(Species=species){
-  contrs <- read.csv(paste(Species,"controls.csv",sep=" "),header=TRUE)
+  contrs <- read.csv(paste(Species,"controls_simple.csv",sep=" "),header=TRUE)
   controls <<- getLHpars(contrs)
   
-  parm <- read.csv(paste(Species,"parameters.csv",sep=" "),header=TRUE)
+  parm <- read.csv(paste(Species,"parameters_simple.csv",sep=" "),header=TRUE)
   parameters <<- getLHpars(parm)
   
-  hab <- read.csv(paste(Species, "habitat.csv",sep=" "),header=TRUE)
-  habitat <<- hab[,1+1:controls$nS]
-  
-  TP <- read.csv(paste(Species, "stocking.csv",sep=" "),header=TRUE)
-  TP.st <<- TP[,1+1:controls$nS]
 }
-set.pars(species)
 
+controls <- list()
+parameters <- list()
 
 set.pars(species)
 numNoVals=15
 numM=12
-M=rep(seq(.05,.16,by=.01),numNoVals)
+M=rep(seq(.03,.16,length=numM),numNoVals)
 No=rep(seq(50,750,by=50),each=numM)
 # This is the call to compute the response surface
 response=mapply(PVA,M,No)
@@ -242,7 +251,7 @@ plot.surface( obj, type="p", col="red",xlab="M",ylab="InitialAbundance",zlab="10
 ProbabilityExtripation100Years=(results)
 Mortality=M[1:numM]
 InitialAbundance=matrix(No,numM,numNoVals)[1,]
-fig1=plot_ly(z=~ProbabilityExtripation100Years,y=~Mortality,x=~InitialAbundance,colors="Greys")
+fig1=plot_ly(z=~ProbabilityExtripation100Years,y=~Mortality,x=~InitialAbundance,colors="Spectral")
 fig1 <- fig1 %>% add_surface()
 fig1
 
