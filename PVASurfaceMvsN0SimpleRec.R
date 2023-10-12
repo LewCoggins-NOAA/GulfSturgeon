@@ -12,6 +12,8 @@ library(grid)
 library(plotly)
 library(fields)
 
+species <- "GulfSturgeon"
+
 
 #------------------------------------------------------------------------------#
 #    NOTES
@@ -193,21 +195,11 @@ library(fields)
   
   return(out)
 }
-  
+
 
 #------------------------------------------------------------------------------#
 #  SET PARAMETERS AND CONTROLS
 #------------------------------------------------------------------------------#
-
-species <- readline(prompt="Please enter the species prefix on files: ")
-GulfSturgeon
-cat("To evaluate a scenario, type 'scenario.switch( scenario ), where scenario
-    can include (so far) 'base', 'epis', 'recfail', 'springs', 'hab', 'dam', 'stock',
-    'remove.brood' or 'supplementation'\n")
-cat("Or, type 'heat.proj() to plot base results.\n")
-cat("New scenarios can be run by altering available habitat or changing controls in appropriate *.csv files.\n")
-cat("New species or populations can be evaluated by changing parameters in appropriate *.csv files.\n")
-#
 
 getLHpars <- function(LHdf=NULL){
   parNames <- LHdf$Parameter
@@ -233,8 +225,8 @@ getLHpars <- function(LHdf=NULL){
 
 controls <- list()
 parameters <- list()
-
 set.pars(species)
+
 numNoVals=15
 numM=12
 M=rep(seq(.03,.16,length=numM),numNoVals)
