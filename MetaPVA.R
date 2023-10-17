@@ -57,7 +57,7 @@ afec <- parameters$afec       # slope of fecundity-weight relationship
 Wmat <- parameters$Wmat       # weight at maturity
 Ms <- parameters$Ms           # maximum survival by stanza
 Bs <- parameters$Bs           # stanza-specific density effect (can be interpretted as amount of available habitat)
-V1 <- parameters$V1           # initial vulnerable abundance (used to create initial population)
+No <- parameters$No           # initial vulnerable abundance (used to create initial population)
 sd.S <- parameters$sd.S       # standard deviation of environmental effect on survival
 
 
@@ -76,10 +76,9 @@ n.pops<-5
 
 
 Rinit=rep(NA,n.pops)              # initial recruitment given initial population
-Rinit[1]=V1/sum(lx)
+Rinit[1]=No/sum(lx)
 ScalePop2to5=c(1.5,2.2,2.4,2.6)
 Rinit[2:5]=Rinit[1]*ScalePop2to5
-
 PopN1=rep(NA,n.pops)
 PopN1=colSums(sapply(Rinit,'*',lx))             # initial abundance
 
@@ -91,58 +90,34 @@ moveProbs=matrix(c(.3,.1,.1,.25,.25,
 
 #moveProbs=diag(5)
 
-
-Pops<-array(NA,c(nT,A,n.pops))
-
-#Pop1<-matrix(NA,nT,A)
-#Pop2<-matrix(NA,nT,A)
-#Pop3<-matrix(NA,nT,A)
-#Pop4<-matrix(NA,nT,A)
-#Pop5<-matrix(NA,nT,A)
-
-
-Pops[1,,1] <- round(Rinit[1]*lx)  ;Pops[1,,1]                         
-Pops[1,,2] <- round(Rinit[2]*lx)  ;Pops[1,,2]
-Pops[1,,3] <- round(Rinit[3]*lx)  ;Pops[1,,3]
-Pops[1,,4] <- round(Rinit[4]*lx)  ;Pops[1,,4]
-Pops[1,,5] <- round(Rinit[5]*lx)  ;Pops[1,,5]
-
 rec.dev <- matrix(exp(rnorm((A-AR+1)*n.pops,0,sd.S)+0.5*sd.S^2),nrow=A-AR+1,ncol=n.pops)  # annual recruitment to initialize each population
 anom <- matrix(exp(rnorm((nT-1)*n.pops,0,sd.S)),nT-1,n.pops)
 
 
-Pops[1,AR:A,1] <- rmultinom(1,PopN1[1],lx*rec.dev[,1]/sum(lx*rec.dev[,1]))        # initial population 
-Pops[1,AR:A,2] <- rmultinom(1,PopN1[2],lx*rec.dev[,2]/sum(lx*rec.dev[,2]))        # initial population 
-Pops[1,AR:A,3] <- rmultinom(1,PopN1[3],lx*rec.dev[,3]/sum(lx*rec.dev[,3]))        # initial population 
-Pops[1,AR:A,4] <- rmultinom(1,PopN1[4],lx*rec.dev[,4]/sum(lx*rec.dev[,4]))        # initial population 
-Pops[1,AR:A,5] <- rmultinom(1,PopN1[5],lx*rec.dev[,5]/sum(lx*rec.dev[,5]))        # initial population 
-
-
+#Initialize Populations
+Pops<-array(NA,c(nT,A,n.pops))
 EtPops<-matrix(NA,nT,n.pops)
+for (i in 1:n.pops){
+  Pops[1,,i] <- round(Rinit[i]*lx)  #;print(Pops[1,,i])
+  Pops[1,AR:A,i] <- rmultinom(1,PopN1[i],lx*rec.dev[,i]/sum(lx*rec.dev[,i]))        # initial population 
+  EtPops[,i] <-sum(Pops[1,AR:A,i]*fec)
+  
+}
 
-#EtPop1 <- rep(NA,nT)                 # eggs for each year in each simulation
-#EtPop2 <- rep(NA,nT)                 # eggs for each year in each simulation
-#EtPop3 <- rep(NA,nT)                 # eggs for each year in each simulation
-#EtPop4 <- rep(NA,nT)                 # eggs for each year in each simulation
-#EtPop5 <- rep(NA,nT)                 # eggs for each year in each simulation
-
-EtPops[,1] <-sum(Pops[1,AR:A,1]*fec)
-EtPops[,2] <-sum(Pops[1,AR:A,2]*fec)
-EtPops[,3] <-sum(Pops[1,AR:A,3]*fec)
-EtPops[,4] <-sum(Pops[1,AR:A,4]*fec)
-EtPops[,5] <-sum(Pops[1,AR:A,5]*fec)
-
-
+#Initialize Movement Array
 moves=array(NA,c(n.pops,A,n.pops))
 
+#Compute the rest of the population dynamics
 for(t in 2:nT){
+  
     for(i in 1:n.pops){
       Pops[t,AR,i] <- rbinom(1,as.integer(pmax(0,EtPops[t-1,i])),pmin(R.A*anom[t-1,i]/(1+R.B*EtPops[t-1,i]),1))
       Pops[t,(AR+1):A,i] <- rbinom(A-AR,pmax(0,Pops[t-1,AR:(A-1),i]),Sa[1:(A-AR)])  # survive fish to the next age
       EtPops[t,i] <- as.integer(sum(Pops[t,AR:A,i]*fec))
       moves[,,i]=sapply(Pops[t,,i],rmultinom,n=1,prob=moveProbs[i,]);sum(moves[,,i])
     }
-  
+
+#Redistribute the Fish after Movement    
     for(i in 1:n.pops){
       Pops[t,,i]=rowSums(moves[i,,1:n.pops])
     }

@@ -9,5 +9,5 @@ afec,1,fecundity multiplier on weight
 Wmat,0.15,"minimum weight, at maturity"
 Ms,1,maximum survival for each pre-recruit stanza
 Bs,1,relative available habitat for each pre-recruit stanza
-V1,5000,initial number of vulnerable fish in the population
+No,5000,initial number of fish in the population
 sd.S,0.000000006,standard deviation in recruitment across years
