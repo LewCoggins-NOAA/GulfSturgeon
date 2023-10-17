@@ -15,24 +15,6 @@ library(fields)
 species <- "GulfSturgeon"
 
 
-#------------------------------------------------------------------------------#
-#    NOTES
-#------------------------------------------------------------------------------#
-
-# can put in parameters for multiple populations so you just choose the 
-# population you will be evaluating
-
-#------------------------------------------------------------------------------#
-#    PROBLEMS
-#------------------------------------------------------------------------------#
-
-# ERROR!!: YOUR ADULT ABUNDANCE IS NOT INDIVIDUAL-BASED. NEED TO PUT RBINOM INTO
-#          MORTALITY CALCULATION
-
-#------------------------------------------------------------------------------#
-#    PROCEDURES
-#------------------------------------------------------------------------------#
-
 "PVA" <- function(M,No){   
 #  "PVA" <- function(controls,parameters,habitat,TP.st){   
     start <- Sys.time()
