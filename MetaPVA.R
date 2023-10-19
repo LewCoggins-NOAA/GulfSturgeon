@@ -61,38 +61,41 @@ Bs <- parameters$Bs                   # stanza-specific density effect (can be i
 No <- parameters$No                   # initial vulnerable abundance (used to create initial population)
 sd.S <- parameters$sd.S               # standard deviation of environmental effect on survival
 n.pops<-parameters$n.pops             # number of populations 
-Rinit.Scale<-parameters$Rinit.Scale   #relative change in initial recruitment between population 1 and other populations
-
+moveProbs<-matrix(c(parameters$move.pear,
+                    parameters$move.pasc,
+                    parameters$move.esca,
+                    parameters$move.yell,
+                    parameters$move.choc,
+                    parameters$move.apal,
+                    parameters$move.suwa),n.pops,n.pops,byrow=T)
 
 age <- AR:A                                     # ages
 la <- (1-exp(-K*age))                           # unfished mean length-at-age
 wa <- la^3                                      # unfished mean weight-at-age
 fec <- (pmax(0,wa-Wmat)*afec)                   # unfished eggs at age
 amat <- as.integer(-log(1-Wmat^(1/3))/K)        # age-at-maturity (used for differentiating subadults and adults)
-Sa <- exp(-Madult/la)                           # length-based survival
-lx <- c(1,Sa[1:(A-AR)])                         # incomplete survivorship to age
-lx <- cumprod(lx)                               # survivorship
-phie <- sum(lx*fec)                             # unfished eggs per recruit
+
+Sa<-matrix(NA,n.pops,A)
+for(j in 1:n.pops){Sa[j,] <- exp(-Madult[j]/la*0.66)}                           # length-based survival
+
+
+lx<-matrix(NA,n.pops,A)
+phie<-rep(NA,n.pops)
+Rinit<-rep(NA,n.pops)              # initial recruitment given initial population size
+PopN1<-rep(NA,n.pops)
+
+for (j in 1:n.pops){
+  lx[j,] <- c(1,Sa[j,1:(A-AR)])                         # incomplete survivorship to age
+  lx[j,] <- cumprod(lx[j,])                               # survivorship
+  phie[j] <- sum(lx[j,]*fec)                             # unfished eggs per recruit
+  Rinit[j]<-No[j]/sum(lx[j,])
+  PopN1[j]<-sum(Rinit[j]*lx[j,])             # initial abundance
+}
+  
 R.A <- reck/phie                                # alpha of recruitment function 
 R.B <- (reck-1)/(R0*phie)                       # beta of Beverton-Holt recruitment function for each population
 
-
-
-
-Rinit<-rep(NA,n.pops)              # initial recruitment given initial population size
-Rinit[1]<-No/sum(lx)
-ScalePop2to5<-c(1.5,2.2,2.4,2.6)   #first Crack at scaling each population
-Rinit[2:5]<-Rinit[1]*ScalePop2to5
-PopN1<-rep(NA,n.pops)
-PopN1<-colSums(sapply(Rinit,'*',lx))             # initial abundance
-
-moveProbs<-matrix(c(.3 ,.1 ,.1,.25,.25,
-                    .0 ,.6 ,.1,.2, .1,
-                    .6 ,.1 ,.1,.1, .1,
-                    .1 ,.1 ,.1,.4, .3,
-                    .1 ,.1 ,.1,.2, .5),5,5,byrow=T)
-
-#moveProbs<-diag(5)
+#moveProbs<-diag(7)
 
 
 
@@ -110,8 +113,8 @@ anom <-    matrix(exp(rnorm((nT-1)*n.pops,0,sd.S)),nT-1,n.pops)
 Pops<-array(NA,c(nT,A,n.pops))
 EtPops<-matrix(NA,nT,n.pops)
 for (i in 1:n.pops){
-  Pops[1,,i] <- round(Rinit[i]*lx)  #;print(Pops[1,,i])
-  Pops[1,AR:A,i] <- rmultinom(1,PopN1[i],lx*rec.dev[,i]/sum(lx*rec.dev[,i]))        # initial population 
+  Pops[1,,i] <- round(Rinit[i]*lx[i,])  #;print(Pops[1,,i])
+  Pops[1,AR:A,i] <- rmultinom(1,PopN1[i],lx[i,]*rec.dev[,i]/sum(lx[i,]*rec.dev[,i]))        # initial population 
   EtPops[,i] <-sum(Pops[1,AR:A,i]*fec)
   
 }
@@ -143,15 +146,18 @@ for(t in 2:nT){
     }
     
     for(i in 1:n.pops){
-      Pops[t,AR,i] <- rbinom(1,as.integer(pmax(0,EtPops[t-1,i])),pmin(R.A*anom[t-1,i]/(1+R.B[i]*EtPops[t-1,i]),1))
-      Pops[t,(AR+1):A,i] <- rbinom(A-AR,pmax(0,Pops[t-1,AR:(A-1),i]),Sa[1:(A-AR)]*svec)  # survive fish to the next age
+      Pops[t,AR,i] <- rbinom(1,as.integer(pmax(0,EtPops[t-1,i])),pmin(R.A[i]*anom[t-1,i]/(1+R.B[i]*EtPops[t-1,i]),1))
+      Pops[t,(AR+1):A,i] <- rbinom(A-AR,pmax(0,Pops[t-1,AR:(A-1),i]),Sa[i,1:(A-AR)]*svec)  # survive fish to the next age
       EtPops[t,i] <- as.integer(sum(Pops[t,AR:A,i]*fec))
       moves[,,i]<-sapply(Pops[t,,i],rmultinom,n=1,prob=moveProbs[i,]);sum(moves[,,i])
+      #moves[,amat:A-AR,i]<-sapply(Pops[t,amat:A-AR,i],rmultinom,n=1,prob=moveProbs[i,]);sum(moves[,,i])
+      
     }
 
 #Redistribute the Fish after Movement    
     for(i in 1:n.pops){
       Pops[t,,i]<-rowSums(moves[i,,1:n.pops])
+      #Pops[t,amat:A-AR,i]<-rowSums(moves[i,amat:A-AR,1:n.pops])
     }
 
     
@@ -169,13 +175,16 @@ print(runtime)
 
 print(colSums(Extir.Results)/n.sim)
 
-#plot(1:200,rowSums(Pops[,,1]),type="l",ylim=c(0,75000),col=1)
-#lines(1:200,rowSums(Pops[,,2]),col=2)
-#lines(1:200,rowSums(Pops[,,3]),col=3)
-#lines(1:200,rowSums(Pops[,,4]),col=4)
-#lines(1:200,rowSums(Pops[,,5]),col=5)
+plot(1:200,rowSums(Pops[,,1]),type="l",ylim=c(0,6000),col=1)
+lines(1:200,rowSums(Pops[,,2]),col=2)
+lines(1:200,rowSums(Pops[,,3]),col=3)
+lines(1:200,rowSums(Pops[,,4]),col=7)
+lines(1:200,rowSums(Pops[,,5]),col=5)
+lines(1:200,rowSums(Pops[,,6]),col=6)
+lines(1:200,rowSums(Pops[,,7]),col=4)
+legend("topright",legend=c("Pearl","Pasc","Esca","Yell","Choc","Apal","Suwa"),lty=1,col=c(1:3,7,5,6,4))
 
-matplot((Abun.Results[,1,1:50]),type='l')
+#matplot((Abun.Results[,1,]),type='l')
 
 
 

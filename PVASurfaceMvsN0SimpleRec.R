@@ -87,7 +87,7 @@ species <- "GulfSturgeon"
   wa <- la^3                                      # unfished mean weight-at-age
   fec <- (pmax(0,wa-Wmat)*afec)                   # unfished eggs at age
   amat <- as.integer(-log(1-Wmat^(1/3))/K)        # age-at-maturity (used for differentiating subadults and adults)
-  Sa <- exp(-Madult/la)                           # length-based survival
+  Sa <- exp(-Madult/la*0.66)                           # length-based survival
   va <- 1/(1+exp(-(la-lh)/lsd))                   # vulnerability
   lx <- c(1,Sa[1:(A-AR)])                         # incomplete survivorship to age
   lx <- cumprod(lx)                               # survivorship
@@ -159,11 +159,11 @@ species <- "GulfSturgeon"
     Et[t,] <- as.integer(colSums(sweep(Nt[t,AR:A,],MARGIN=1,fec,'*')))*fec.mult
   }
   
-    plot(rowSums(Nt[,,10]),ylim=c(0,2000),type='l')
-    plot(as.vector(Nt[100:nT,1,]),ylim=c(0,1000))
-    mean(as.vector(Nt[100:nT,1,]))
-    mean(as.vector(Nt[100:nT,4,]))
-    mean(rowSums(Nt[100:nT,,]))/n.sim
+    # plot(rowSums(Nt[,,10]),ylim=c(0,2000),type='l')
+    # plot(as.vector(Nt[100:nT,1,]),ylim=c(0,1000))
+    # mean(as.vector(Nt[100:nT,1,]))
+    # mean(as.vector(Nt[100:nT,4,]))
+    # mean(rowSums(Nt[100:nT,,]))/n.sim
   
   
   
@@ -172,9 +172,9 @@ species <- "GulfSturgeon"
   p.extinct.50 <- NA
   p.extinct.100 <- NA
   p.extinct.200 <- NA
-  if( nT >= 50 ) p.extinct.50 <- length(which(colSums(Nt[50,,],na.rm=TRUE)==0))/n.sim
-  if( nT >= 100 ) p.extinct.100 <- length(which(colSums(Nt[100,,],na.rm=TRUE)==0))/n.sim
-  if( nT >= 200 ) p.extinct.200 <- length(which(colSums(Nt[200,,],na.rm=TRUE)==0))/n.sim
+  if( nT >= 50 ) p.extinct.50 <- length(which(colSums(Nt[50,,],na.rm=TRUE)<50))/n.sim
+  if( nT >= 100 ) p.extinct.100 <- length(which(colSums(Nt[100,,],na.rm=TRUE)<50))/n.sim
+  if( nT >= 200 ) p.extinct.200 <- length(which(colSums(Nt[200,,],na.rm=TRUE)<50))/n.sim
   runtime <- Sys.time()-start
   print(runtime)
 
