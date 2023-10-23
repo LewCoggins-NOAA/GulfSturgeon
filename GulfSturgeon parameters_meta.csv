@@ -1,5 +1,5 @@
 Parameter,Value,Definition
-R0,1832;1900;506;327;466;542;662,unfished recruitment at equilibrium of each popululation
+R0,1832;1869;492;327;461;537;655,unfished recruitment at equilibrium of each popululation
 reck,2.8,recruitment compensation ratio - the difference in juvenile survival between unfished and near zero density
 K,0.13,von Bertalanffy 'growth' parameter
 Madult,0.274;0.139;0.139;0.139;0.117;0.117;0.117;,mortality of fish at Linf
@@ -9,8 +9,8 @@ afec,1,fecundity multiplier on weight
 Wmat,0.15,"minimum weight, at maturity"
 Ms,1,maximum survival for each pre-recruit stanza
 Bs,1,relative available habitat for each pre-recruit stanza
-No,788;260;543;2105;3796;2291;4827,initial number of fish in the population
-sd.S,0.6,standard deviation in recruitment across years
+No,788;356;744;2821;4680;2824;5951,initial number of fish in the population
+sd.S,0.3,standard deviation in recruitment across years
 n.pops,7
 
 move.pear,.88;.12;0;0;0;0;0, movement from the Pearl river
