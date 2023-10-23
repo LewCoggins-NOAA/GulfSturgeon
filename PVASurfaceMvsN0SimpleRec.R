@@ -42,7 +42,7 @@ species <- "GulfSturgeon"
   #   and the number of simulations (n.sim)
   # parameters is a list of all parameters
 
-  #M=.05
+  #M=.35
   #No=500
   
   nT <- controls$nT
@@ -81,7 +81,6 @@ species <- "GulfSturgeon"
   lam=c(1,1)
 
   
-  
   age <- AR:A                                     # ages
   la <- (1-exp(-K*age))                           # unfished mean length-at-age
   wa <- la^3                                      # unfished mean weight-at-age
@@ -108,6 +107,7 @@ species <- "GulfSturgeon"
   #B.s <- Bs*R.B/sum(den)                           # carrying capacity parameter for each stanza
 
   # initialize population
+ 
   Nt <- array(dim=c(nT,A,n.sim))                   # numbers at time and age for each simulation
   Et <- matrix(nrow=nT,ncol=n.sim)                 # eggs for each year in each simulation
   rec.dev <- matrix(exp(rnorm((A-AR+1)*n.sim,0,sd.S)+0.5*sd.S^2),nrow=A-AR+1,ncol=n.sim)  # annual recruitment deviate
@@ -152,6 +152,7 @@ species <- "GulfSturgeon"
     for(st in 1:nS){
       N.st[st,] <- N.st[st,]*rec.mult # + TP.st[t]  # spring cold recruitment reductions# add stocked fish 
       N.st[st+1,] <- rbinom(n.sim,as.integer(pmax(0,N.st[st,])),pmin(A.s[st]*anom[t,st,]/(1+B.st[st,nS]*N.st[st,]),1))
+
     }
     Nt[t,AR,] <- as.integer(N.st[nS+1,]*ep.S[1,])       # numbers surviving through all stanzas become recruits to the population
     for(i in 1:n.sim)
@@ -229,7 +230,7 @@ set.pars(species)
 
 numNoVals=15
 numM=12
-M=rep(seq(.03,.16,length=numM),numNoVals)
+M=rep(seq(.2,.4,length=numM),numNoVals)
 No=rep(seq(50,750,by=50),each=numM)
 # This is the call to compute the response surface
 response=mapply(PVA,M,No)
@@ -240,7 +241,7 @@ obj<- list(x=M[1:numM], y=matrix(No,numM,numNoVals)[1,],z=results)
 plot.surface( obj, type="c", col="red",xlab="M",ylab="InitialAbundance",zlab="100yrExtripationProb")
 plot.surface( obj, type="p", col="red",xlab="M",ylab="InitialAbundance",zlab="100yrExtripationProb")
 
-ProbabilityExtripation100Years=(results)
+ProbabilityExtripation100Years=results
 Mortality=M[1:numM]
 InitialAbundance=matrix(No,numM,numNoVals)[1,]
 fig1=plot_ly(z=~ProbabilityExtripation100Years,y=~Mortality,x=~InitialAbundance,colors="Spectral")

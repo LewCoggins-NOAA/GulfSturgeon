@@ -96,10 +96,11 @@ R.A <- reck/phie                                # alpha of recruitment function
 R.B <- (reck-1)/(R0*phie)                       # beta of Beverton-Holt recruitment function for each population
 
 
-moveProbs<-diag(n.pops)
+#moveProbs<-diag(n.pops)
 
 
 Abun.Results=array(NA,c(nT,n.pops,n.sim))
+Adult.Results=array(NA,c(nT,n.pops,n.sim))
 Extir.Results=matrix(NA,n.sim,n.pops)
 
 for(j in 1:n.sim){
@@ -146,25 +147,25 @@ for(t in 2:nT){
     }
     
     for(i in 1:n.pops){
-      #Pops[t,AR,i] <- rbinom(1,as.integer(pmax(0,EtPops[t-1,i])),pmin(R.A[i]*anom[t-1,i]/(1+R.B[i]*EtPops[t-1,i]),1))
-      Pops[t,AR,i] <- as.integer((R.A[i]*EtPops[t-1,i]*anom[t-1,i])/(1+R.B[i]*EtPops[t-1,i]))
-      Pops[t,AR,i] <- as.integer((R.A[i]*EtPops[t-1,i])/(1+R.B[i]*EtPops[t-1,i]))
+      Pops[t,AR,i] <- rbinom(1,as.integer(pmax(0,EtPops[t-1,i])),pmin(R.A[i]*anom[t-1,i]/(1+R.B[i]*EtPops[t-1,i]),1))
+      #Pops[t,AR,i] <- as.integer((R.A[i]*EtPops[t-1,i]*anom[t-1,i])/(1+R.B[i]*EtPops[t-1,i]))
+      #Pops[t,AR,i] <- as.integer((R.A[i]*EtPops[t-1,i])/(1+R.B[i]*EtPops[t-1,i]))
       
       
       Pops[t,(AR+1):A,i] <- rbinom(A-AR,as.integer(pmax(0,Pops[t-1,AR:(A-1),i])),Sa[i,1:(A-AR)]*svec)  # survive fish to the next age
-      Pops[t,(AR+1):A,i] <- (Pops[t-1,AR:(A-1),i]*Sa[i,1:(A-AR)]*svec)  # survive fish to the next age
+      #Pops[t,(AR+1):A,i] <- (Pops[t-1,AR:(A-1),i]*Sa[i,1:(A-AR)]*svec)  # survive fish to the next age
       
       
       
-      EtPops[t,i] <- as.integer(sum(Pops[t,AR:A,i]*fec));print(EtPops[t,i])
-      moves[,,i]<-as.integer(sapply(Pops[t,,i],rmultinom,n=1,prob=moveProbs[i,]));sum(moves[,,i])
+      EtPops[t,i] <- as.integer(sum(Pops[t,AR:A,i]*fec));#print(EtPops[t,i])
+      moves[,,i]<-as.integer(sapply(Pops[t,,i],rmultinom,n=1,prob=moveProbs[i,]));#print(sum(moves[,,i]))
       #moves[,amat:A-AR,i]<-sapply(Pops[t,amat:A-AR,i],rmultinom,n=1,prob=moveProbs[i,]);sum(moves[,,i])
       
     }
 
 #Redistribute the Fish after Movement    
     for(i in 1:n.pops){
-      Pops[t,,i]<-rowSums(moves[i,,1:n.pops])
+      #Pops[t,,i]<-rowSums(moves[i,,1:n.pops])
       #Pops[t,amat:A-AR,i]<-rowSums(moves[i,amat:A-AR,1:n.pops])
     }
 
@@ -172,9 +173,11 @@ for(t in 2:nT){
   }
 
 
-
 Abun.Results[,,j]<-apply(Pops,3,rowSums)
-Extir.Results[j,]<-apply(Abun.Results[1:100,,j],2,min)<=extir.threshold
+Adult.Results[,,j]<-apply(Pops[,amat:A,],3,rowSums)
+Extir.Results[j,]<-apply(Adult.Results[1:100,,j],2,min)<=extir.threshold
+#proportion below starting abundance at 25 to get a probability of decline
+#timeseries of mean age for each river 
 runtime <- Sys.time()-start
 print(runtime)    
 
@@ -183,7 +186,7 @@ print(runtime)
 
 print(colSums(Extir.Results)/n.sim)
 
-plot(1:200,rowSums(Pops[,,1]),type="l",ylim=c(0,8000),col=1)
+plot(1:200,rowSums(Pops[,,1]),type="l",ylim=c(0,16000),col=1)
 lines(1:200,rowSums(Pops[,,2]),col=2)
 lines(1:200,rowSums(Pops[,,3]),col=3)
 lines(1:200,rowSums(Pops[,,4]),col=7)
@@ -192,7 +195,16 @@ lines(1:200,rowSums(Pops[,,6]),col=6)
 lines(1:200,rowSums(Pops[,,7]),col=4)
 legend("topleft",legend=c("Pearl","Pasc","Esca","Yell","Choc","Apal","Suwa"),lty=1,col=c(1:3,7,5,6,4),bty='n')
 
-#matplot((Abun.Results[,1,]),type='l')
+for(i in 1:n.pops){
+  matplot((Adult.Results[,i,]),type='l',ylim=c(0,1000))
+  abline(h=50,lwd=2)
+}
+matplot((Adult.Results[,2,]),type='l',ylim=c(0,1000))
+matplot((Adult.Results[,3,]),type='l',ylim=c(0,1000))
+matplot((Adult.Results[,4,]),type='l',ylim=c(0,1000))
+matplot((Adult.Results[,5,]),type='l',ylim=c(0,1000))
+matplot((Adult.Results[,6,]),type='l',ylim=c(0,1000))
+matplot((Adult.Results[,7,]),type='l',ylim=c(0,1000))
 
 
 

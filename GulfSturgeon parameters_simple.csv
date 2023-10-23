@@ -5,9 +5,9 @@ K,0.13,von Bertalanffy 'growth' parameter
 Madult,0.1627,mortality of fish at Linf
 lh,0,length at 50% capture probability (as a proportion of Linf)
 lsd,0.0001,slope of logistic function at 50% capture probability
-afec,1,fecundity multiplier on weight
+afec,500000,fecundity multiplier on weight
 Wmat,0.15,"minimum weight, at maturity"
 Ms,1,maximum survival for each pre-recruit stanza
 Bs,1,relative available habitat for each pre-recruit stanza
 V1,50,initial number of vulnerable fish in the population
-sd.S,0.000000006,standard deviation in recruitment across years
+sd.S,0.6,standard deviation in recruitment across years
