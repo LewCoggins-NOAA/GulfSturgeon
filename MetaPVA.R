@@ -196,15 +196,15 @@ lines(1:200,rowSums(Pops[,,7]),col=4)
 legend("topleft",legend=c("Pearl","Pasc","Esca","Yell","Choc","Apal","Suwa"),lty=1,col=c(1:3,7,5,6,4),bty='n')
 
 for(i in 1:n.pops){
-  matplot((Adult.Results[,i,]),type='l',ylim=c(0,1000))
+  matplot((Adult.Results[,i,]),type='l',ylim=c(0,10000))
   abline(h=50,lwd=2)
 }
-matplot((Adult.Results[,2,]),type='l',ylim=c(0,1000))
-matplot((Adult.Results[,3,]),type='l',ylim=c(0,1000))
-matplot((Adult.Results[,4,]),type='l',ylim=c(0,1000))
-matplot((Adult.Results[,5,]),type='l',ylim=c(0,1000))
-matplot((Adult.Results[,6,]),type='l',ylim=c(0,1000))
-matplot((Adult.Results[,7,]),type='l',ylim=c(0,1000))
+# matplot((Adult.Results[,2,]),type='l',ylim=c(0,10000))
+# matplot((Adult.Results[,3,]),type='l',ylim=c(0,10000))
+# matplot((Adult.Results[,4,]),type='l',ylim=c(0,10000))
+# matplot((Adult.Results[,5,]),type='l',ylim=c(0,10000))
+# matplot((Adult.Results[,6,]),type='l',ylim=c(0,10000))
+# matplot((Adult.Results[,7,]),type='l',ylim=c(0,10000))
 
 
 

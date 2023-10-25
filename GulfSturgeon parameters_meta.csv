@@ -11,8 +11,7 @@ Ms,1,maximum survival for each pre-recruit stanza
 Bs,1,relative available habitat for each pre-recruit stanza
 No,797;161;339;2962;2183;1359;6295,initial number of fish in the population
 sd.S,0.6,standard deviation in recruitment across years
-n.pops,7
-
+n.pops,7,number of populations
 move.pear,.88;.12;0;0;0;0;0, movement from the Pearl river
 move.pasc,.02;.95;0.02;0.005;0.005;0;0, movement from the Pascagula river
 move.esca,0;0.015;.66;.21;.1;.015;0, movement from the Escambia river
