@@ -190,7 +190,7 @@ for(j in 1:n.sim){
   #proportion below adult starting abundance at 25 to get a probability of decline
   Nadult20to25=matrix(NA,n.pops,n.sim)
   Nadult20to25=apply(Adult.Results[20:25,,],3,colMeans)
-  Declines=rowMeans(Nadult20to25<Adult.Results[1,,]*.9)
+  Declines=rowMeans(Nadult20to25<Adult.Results[1,,]*.75)
 
   #timeseries of mean age for each river
 
