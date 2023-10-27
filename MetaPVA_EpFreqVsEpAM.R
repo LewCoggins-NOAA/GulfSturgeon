@@ -37,7 +37,11 @@ MetaPVA<-function(epfreq,epAM){
   
   start <- Sys.time()
   cat("Calculating population projections ...\n")
+ 
   
+  #ep.fr <- epfreq[1]
+  #ep.A.M <- epAM[1]
+   
 
   nT <- controls$nT
   n.sim <- controls$n.sim
@@ -181,13 +185,35 @@ for(j in 1:n.sim){
   Abun.Results[,,j]<-apply(Pops[,,,j],3,rowSums)
   Adult.Results[,,j]<-apply(Pops[,amat:A,,j],3,rowSums)
   Extir.Results[j,]<-apply(Adult.Results[1:100,,j],2,min)<=extir.threshold
-  #proportion below starting abundance at 25 to get a probability of decline
+} 
+  
+  #proportion below adult starting abundance at 25 to get a probability of decline
+  Nadult20to25=matrix(NA,n.pops,n.sim)
+  Nadult20to25=apply(Adult.Results[20:25,,],3,colMeans)
+  Declines=rowMeans(Nadult20to25<Adult.Results[1,,]*.9)
+
   #timeseries of mean age for each river
-}  
+
+  meanAge=matrix(NA,nT,n.pops)
+  temp=array(NA,c(nT,n.pops,n.sim))
+  for (t in 1:nT){
+    for(i in 1:n.pops){
+      for (j in 1:n.sim){
+        temp[t,i,j]=sum(Pops[t,,i,j]*1:60)/sum(Pops[t,,i,j])
+      }
+    }
+    meanAge[t,]=rowMeans(temp[t,,])
+  }
+  
+  
+  
+  
+  
+  
 runtime <- Sys.time()-start
 print(runtime)    
 
-out<-list(Extir.Res=Extir.Results,Abun.Res=Abun.Results,Adult.Res=Adult.Results)
+out<-list(Extir.Res=Extir.Results,Abun.Res=Abun.Results,Adult.Res=Adult.Results,Decline.Res=Declines,MeanAge.Res=meanAge)
 
 return(out)
 
@@ -226,10 +252,10 @@ snow::clusterExport(my_cluster, c("set.pars", "getLHpars", "MetaPVA"))
 
 # perform the apply in parallel rather than on one cpu
 response = snow::parLapply(my_cluster, x = ep_params_list, fun = function(ep_params) {
-  species <- "GulfSturgeon"
+  Species <- "GulfSturgeon"
   controls <- list()
   parameters <- list()
-  set.pars(species)
+  set.pars(Species)
   MetaPVA(epfreq = ep_params["epfreq"], epAM = ep_params["epAM"])
 })
 
@@ -240,6 +266,8 @@ cat("\nElapsed:", format(stoptime - starttime, digits = 2))
 
 # extract the extirpation outcomes at each combo of control parameters
 Extir.Res = lapply(1:length(response), function(i) response[[i]]$Extir.Res)
+Decline.Res = lapply(1:length(response), function(i) response[[i]]$Decline.Res)
+MeanAge.Res = lapply(1:length(response), function(i) response[[i]]$MeanAge.Res)
 
 # calculate extirpation probabilities
 # ready to be passed to the remainder of the summary prep/plotting code
