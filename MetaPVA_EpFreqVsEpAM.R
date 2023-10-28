@@ -39,8 +39,8 @@ MetaPVA<-function(epfreq,epAM){
   cat("Calculating population projections ...\n")
  
   
-  #ep.fr <- epfreq[1]
-  #ep.A.M <- epAM[1]
+  #ep.fr <- epfreq[4]
+  #ep.A.M <- epAM[4]
    
 
   nT <- controls$nT
@@ -117,7 +117,7 @@ MetaPVA<-function(epfreq,epAM){
 Abun.Results=array(NA,c(nT,n.pops,n.sim))
 Adult.Results=array(NA,c(nT,n.pops,n.sim))
 Extir.Results=matrix(NA,n.sim,n.pops)
-
+numpops.ext=rep(NA,n.sim)
 
 rec.dev<- array(exp(rnorm((A-AR+1)*n.pops*n.sim,0,sd.S)+0.5*sd.S^2),c((A-AR+1),n.pops,n.sim))  # annual recruitment to initialize each population
 anom <-   array(exp(rnorm((nT-1)*n.pops*n.sim,0,sd.S)),c((nT-1),n.pops,n.sim))
@@ -186,6 +186,11 @@ for(j in 1:n.sim){
   Adult.Results[,,j]<-apply(Pops[,amat:A,,j],3,rowSums)
   Extir.Results[j,]<-apply(Adult.Results[1:100,,j],2,min)<=extir.threshold
 } 
+
+#Compute probability of the number of populations becoming extirpated  
+  numpops.ext=rowSums(Extir.Results)
+  prop.extir=sapply(0:(n.pops),function(i)1-length(numpops.ext[numpops.ext<=i])/n.sim);prop.extir
+  #prop.extir=sapply(0:(n.pops),function(i)length(numpops.ext[numpops.ext<=i]));prop.extir
   
   #proportion below adult starting abundance at 25 to get a probability of decline
   Nadult20to25=matrix(NA,n.pops,n.sim)
@@ -213,7 +218,7 @@ for(j in 1:n.sim){
 runtime <- Sys.time()-start
 print(runtime)    
 
-out<-list(Extir.Res=Extir.Results,Abun.Res=Abun.Results,Adult.Res=Adult.Results,Decline.Res=Declines,MeanAge.Res=meanAge)
+out<-list(Extir.Res=Extir.Results,Abun.Res=Abun.Results,Adult.Res=Adult.Results,Decline.Res=Declines,MeanAge.Res=meanAge,PropExt.Res=prop.extir)
 
 return(out)
 
@@ -269,6 +274,16 @@ Extir.Res = lapply(1:length(response), function(i) response[[i]]$Extir.Res)
 Decline.Res = lapply(1:length(response), function(i) response[[i]]$Decline.Res)
 MeanAge.Res = lapply(1:length(response), function(i) response[[i]]$MeanAge.Res)
 
+
+ProbExt1orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[1]),numepAM,numepfreqVals)
+ProbExt2orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[2]),numepAM,numepfreqVals)
+ProbExt3orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[3]),numepAM,numepfreqVals)
+ProbExt4orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[4]),numepAM,numepfreqVals)
+ProbExt5orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[5]),numepAM,numepfreqVals)
+ProbExt6orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[6]),numepAM,numepfreqVals)
+ProbExtEQ7=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[7]),numepAM,numepfreqVals)
+ProbExtEQ0=1-ProbExt1orMore
+
 # calculate extirpation probabilities
 # ready to be passed to the remainder of the summary prep/plotting code
 # NOTE: colMeans is cleaner way to calculate proportion of TRUE elements than colSums/n.sim
@@ -294,6 +309,17 @@ fig=plot_ly(z=~Yellow_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~
 fig=plot_ly(z=~Choctawhatchee_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
 fig=plot_ly(z=~Apalachicola_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
 fig=plot_ly(z=~Suwannee_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+
+fig=plot_ly(z=~ProbExtEQ0,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt1orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt2orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt3orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt4orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt5orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt6orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExtEQ7,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+
+
 
 # for(i in 1:7){
 #   matplot((results[[2]][,i,]),type='l',ylim=c(0,10000))
