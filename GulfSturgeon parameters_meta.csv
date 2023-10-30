@@ -5,13 +5,14 @@ K,0.13,von Bertalanffy 'growth' parameter
 Madult,0.274;0.139;0.139;0.139;0.117;0.117;0.117;,mortality of fish at Linf
 lh,0,length at 50% capture probability (as a proportion of Linf)
 lsd,0.0001,slope of logistic function at 50% capture probability
-afec,800000,fecundity multiplier on weight
+afec,100000,fecundity multiplier on weight
 Wmat,0.15,"minimum weight, at maturity"
 Ms,1,maximum survival for each pre-recruit stanza
 Bs,1,relative available habitat for each pre-recruit stanza
 No,797;161;339;2962;2183;1359;6295,initial number of fish in the population
 sd.S,0.6,standard deviation in recruitment across years
 n.pops,7,number of populations
+age.move,7,minimum age of fish that move between rivers
 move.pear,.88;.12;0;0;0;0;0, movement from the Pearl river
 move.pasc,.02;.95;0.02;0.005;0.005;0;0, movement from the Pascagula river
 move.esca,0;0.015;.66;.21;.1;.015;0, movement from the Escambia river

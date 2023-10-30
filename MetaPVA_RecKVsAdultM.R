@@ -4,8 +4,7 @@
 ### examine multi stock performance objectives
 #This version allows specification of minimum age of movement movement
 
-#this version is tailored to compare output among different values of catastrophe 
-#frequency and severity.
+#explores Madult versus RecK
 
 #this version includes parallel processing
 
@@ -40,15 +39,13 @@ getLHpars <- function(LHdf=NULL){
 #moveProbs<-diag(n.pops)
 
 
-MetaPVA<-function(epfreq,epAM){
+MetaPVA<-function(RecK,AM.Factor){
   
   start <- Sys.time()
   cat("Calculating population projections ...\n")
  
-  
-  #ep.fr <- epfreq[4]
-  #ep.A.M <- epAM[4]
-   
+  #reck <- 3
+  #AM.Factor<-0.75
 
   nT <- controls$nT
   n.sim <- controls$n.sim
@@ -56,11 +53,9 @@ MetaPVA<-function(epfreq,epAM){
   nS <- controls$nS
   AR <- controls$AR
   h.st <- controls$h.st
-  ep.fr <- epfreq
-  #ep.fr <- controls$ep.fr
+  ep.fr <- controls$ep.fr
   ep.J.M <- controls$ep.J.M
-  ep.A.M <- epAM
-  #ep.A.M <- controls$ep.A.M
+  ep.A.M <- controls$ep.A.M
   ep.spr <- controls$ep.spr
   recfail <- controls$recfail
   ep.fec <- controls$ep.fec
@@ -68,9 +63,11 @@ MetaPVA<-function(epfreq,epAM){
   extir.threshold<-controls$extir.threshold
   
   R0 <- parameters$R0                   # unfished equilibrium recruitment
-  reck <- parameters$reck               # recruitment compensation ratio
+#  reck <- parameters$reck               # recruitment compensation ratio
+  reck <- RecK;print(reck)                          # recruitment compensation ratio
   K <- parameters$K                     # von Bertalanffy metabolic parameter
   Madult <- parameters$Madult           # vector of age-specific survival (after age at recruitment) [length=A-AR+1]
+  Madult<-AM.Factor*Madult;print(AM.Factor)              # Madult modification
   lh <- parameters$lh                   # length at 50% capture probability (logistic function)
   afec <- parameters$afec               # slope of fecundity-weight relationship
   Wmat <- parameters$Wmat               # weight at maturity
@@ -161,9 +158,7 @@ for (j in 1:n.sim){
 
 #Compute the rest of the population dynamics
 for(t in 2:nT){
-    #episotic events
-#    ep.S <- rep(1,(A-AR+1))
-    
+
     for(i in 1:n.pops){
       #Pops[t,AR,i,] <- rbinom(n.sim,as.integer(pmax(0,EtPops[t-1,i,])),pmin(R.A[i]*anom[t-1,i,]/(1+R.B[i]*EtPops[t-1,i,]),1))
       Pops[t,AR,i,] <- as.integer((R.A[i]*EtPops[t-1,i,]*anom[t-1,i,])/(1+R.B[i]*EtPops[t-1,i,]))
@@ -173,7 +168,7 @@ for(t in 2:nT){
         Pops[t,(AR+1):A,i,j] <- rbinom(A-AR,as.integer(pmax(0,Pops[t-1,AR:(A-1),i,j])),ep.S[t-1,,j]*Sa[i,AR:(A-1)])  # survive fish to the next age
         EtPops[t,i,j] <- as.integer(sum(Pops[t,AR:A,i,j]*fec));#print(EtPops[t,i,j])
         #moves[,,i,j]<-as.integer(sapply(Pops[t,,i,j],rmultinom,n=1,prob=moveProbs[i,]))
-        #moves[,A.move:(A),i,j]<-sapply(Pops[t,A.move:(A),i,j],rmultinom,n=1,prob=moveProbs[i,])
+        moves[,A.move:(A),i,j]<-sapply(Pops[t,A.move:(A),i,j],rmultinom,n=1,prob=moveProbs[i,])
       }
       #moves[,,i,]<-sapply(Pops[t,,i,],rmultinom,n=1,prob=moveProbs[i,])
       moves[,A.move:(A),i,]<-sapply(Pops[t,A.move:(A),i,],rmultinom,n=1,prob=moveProbs[i,])#;sum(moves[,,i,])
@@ -236,11 +231,10 @@ return(out)
 }
 
 
-numepfreqVals=5
-numepAM=11
-epAM=rep(seq(.25,.75,length=numepAM),numepfreqVals)
-epfreq=rep(seq(5,25,by=5),each=numepAM)
-
+numRecKVals=5
+numAM.FactorVals=5
+AM.Factor=rep(seq(0.5,1.5,length=numAM.FactorVals),numRecKVals)
+RecK=rep(seq(2,6,by=1),each=numAM.FactorVals)
 
 # set number of cores to use
 ncpu = 14
@@ -249,7 +243,7 @@ ncpu = 14
 # we parLapply over this
 # will evaluate MetaPVA at each combination of epAM and epfreq
 # but each call to MetaPVA happens on a different core
-ep_params_list = lapply(1:(numepfreqVals * numepAM), function(i) c(epAM = epAM[i], epfreq = epfreq[i]))
+lh_params_list = lapply(1:(numRecKVals * numAM.FactorVals), function(i) c(AM.Factor = AM.Factor[i], RecK = RecK[i]))
 
 # start a timer
 starttime = Sys.time()
@@ -267,12 +261,12 @@ my_cluster = snow::makeSOCKcluster(ncpu)
 snow::clusterExport(my_cluster, c("set.pars", "getLHpars", "MetaPVA"))
 
 # perform the apply in parallel rather than on one cpu
-response = snow::parLapply(my_cluster, x = ep_params_list, fun = function(ep_params) {
+response = snow::parLapply(my_cluster, x = lh_params_list, fun = function(lh_params) {
   Species <- "GulfSturgeon"
   controls <- list()
   parameters <- list()
   set.pars(Species)
-  MetaPVA(epfreq = ep_params["epfreq"], epAM = ep_params["epAM"])
+  MetaPVA(AM.Factor = lh_params["AM.Factor"], RecK = lh_params["RecK"])
 })
 
 # stop the cluster and timer
@@ -286,13 +280,13 @@ Decline.Res = lapply(1:length(response), function(i) response[[i]]$Decline.Res)
 MeanAge.Res = lapply(1:length(response), function(i) response[[i]]$MeanAge.Res)
 
 
-ProbExt1orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[1]),numepAM,numepfreqVals)
-ProbExt2orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[2]),numepAM,numepfreqVals)
-ProbExt3orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[3]),numepAM,numepfreqVals)
-ProbExt4orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[4]),numepAM,numepfreqVals)
-ProbExt5orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[5]),numepAM,numepfreqVals)
-ProbExt6orMore=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[6]),numepAM,numepfreqVals)
-ProbExtEQ7=matrix(sapply(1:(numepfreqVals * numepAM),function(i)response[[i]]$PropExt.Res[7]),numepAM,numepfreqVals)
+ProbExt1orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[1]),numAM.FactorVals,numRecKVals)
+ProbExt2orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[2]),numAM.FactorVals,numRecKVals)
+ProbExt3orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[3]),numAM.FactorVals,numRecKVals)
+ProbExt4orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[4]),numAM.FactorVals,numRecKVals)
+ProbExt5orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[5]),numAM.FactorVals,numRecKVals)
+ProbExt6orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[6]),numAM.FactorVals,numRecKVals)
+ProbExtEQ7=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[7]),numAM.FactorVals,numRecKVals)
 ProbExtEQ0=1-ProbExt1orMore
 
 # calculate extirpation probabilities
@@ -301,34 +295,34 @@ ProbExtEQ0=1-ProbExt1orMore
 extir = sapply(Extir.Res, colMeans)
 
 
-CatastropheFrequency=matrix(epfreq,numepAM,numepfreqVals)[1,]
-CatastropheMortality=seq(.25,.75,length=numepAM)
+RecruitmentCompensation=matrix(RecK,numAM.FactorVals,numRecKVals)[1,]
+AdultMortalityFactor=rep(AM.Factor[1:numAM.FactorVals],numRecKVals)
 
-Pearl_ProbabilityExtripation100Years=matrix(extir[1,],numepAM,numepfreqVals)
-Pascagoula_ProbabilityExtripation100Years =matrix(extir[2,],numepAM,numepfreqVals)
-Escambia_ProbabilityExtripation100Years =matrix(extir[3,],numepAM,numepfreqVals)
-Yellow_ProbabilityExtripation100Years =matrix(extir[4,],numepAM,numepfreqVals)
-Choctawhatchee_ProbabilityExtripation100Years =matrix(extir[5,],numepAM,numepfreqVals)
-Apalachicola_ProbabilityExtripation100Years =matrix(extir[6,],numepAM,numepfreqVals)
-Suwannee_ProbabilityExtripation100Years =matrix(extir[7,],numepAM,numepfreqVals)
+Pearl_ProbabilityExtripation100Years=matrix(extir[1,],numAM.FactorVals,numRecKVals)
+Pascagoula_ProbabilityExtripation100Years =matrix(extir[2,],numAM.FactorVals,numRecKVals)
+Escambia_ProbabilityExtripation100Years =matrix(extir[3,],numAM.FactorVals,numRecKVals)
+Yellow_ProbabilityExtripation100Years =matrix(extir[4,],numAM.FactorVals,numRecKVals)
+Choctawhatchee_ProbabilityExtripation100Years =matrix(extir[5,],numAM.FactorVals,numRecKVals)
+Apalachicola_ProbabilityExtripation100Years =matrix(extir[6,],numAM.FactorVals,numRecKVals)
+Suwannee_ProbabilityExtripation100Years =matrix(extir[7,],numAM.FactorVals,numRecKVals)
 
 contours = list(showlabels = TRUE,start = 0,end = 1,labelfont = list(size = 12, color = "lightgray"))
-fig=plot_ly(z=~Pearl_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Pascagoula_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Escambia_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Yellow_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Choctawhatchee_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Apalachicola_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Suwannee_ProbabilityExtripation100Years,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Pearl_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Pascagoula_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Escambia_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Yellow_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Choctawhatchee_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Apalachicola_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Suwannee_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
 
-fig=plot_ly(z=~ProbExtEQ0,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt1orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt2orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt3orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt4orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt5orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt6orMore,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExtEQ7,y=~CatastropheMortality,x=~CatastropheFrequency,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExtEQ0,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt1orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt2orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt3orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt4orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt5orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt6orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExtEQ7,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
 
 
 
