@@ -157,32 +157,28 @@ for (j in 1:n.sim){
   moves<-array(NA,c(n.pops,A,n.pops,n.sim))
 
 #Compute the rest of the population dynamics
-for(t in 2:nT){
-
+  for(t in 2:nT){
+    
     for(i in 1:n.pops){
-      #Pops[t,AR,i,] <- rbinom(n.sim,as.integer(pmax(0,EtPops[t-1,i,])),pmin(R.A[i]*anom[t-1,i,]/(1+R.B[i]*EtPops[t-1,i,]),1))
-      Pops[t,AR,i,] <- as.integer((R.A[i]*EtPops[t-1,i,]*anom[t-1,i,])/(1+R.B[i]*EtPops[t-1,i,]))
-      #Pops[t,AR,i] <- as.integer((R.A[i]*EtPops[t-1,i,j])/(1+R.B[i]*EtPops[t-1,i,j]))
+      #Pops[t,AR,i,] <- rbinom(n.sim,as.integer(pmax(0,EtPops[t-1,i,])),pmin(R.A[i]*anom[t-1,i,]/(1+R.B[i]*EtPops[t-1,i,]),1)) #IBM Recruitment
+      Pops[t,AR,i,] <- as.integer((R.A[i]*EtPops[t-1,i,]*anom[t-1,i,])/(1+R.B[i]*EtPops[t-1,i,]))  #non-IBM Recruitment
       
       for(j in 1:n.sim){      
         Pops[t,(AR+1):A,i,j] <- rbinom(A-AR,as.integer(pmax(0,Pops[t-1,AR:(A-1),i,j])),ep.S[t-1,,j]*Sa[i,AR:(A-1)])  # survive fish to the next age
         EtPops[t,i,j] <- as.integer(sum(Pops[t,AR:A,i,j]*fec));#print(EtPops[t,i,j])
-        #moves[,,i,j]<-as.integer(sapply(Pops[t,,i,j],rmultinom,n=1,prob=moveProbs[i,]))
-        moves[,A.move:(A),i,j]<-sapply(Pops[t,A.move:(A),i,j],rmultinom,n=1,prob=moveProbs[i,])
+        #moves[,A.move:(A),i,j]<-sapply(Pops[t,A.move:(A),i,j],rmultinom,n=1,prob=moveProbs[i,]) #this is a redundant line that computes movement within simulation loop, I think doing it this way is slightly slower than computing movement outside the simulation loop as below
       }
-      #moves[,,i,]<-sapply(Pops[t,,i,],rmultinom,n=1,prob=moveProbs[i,])
       moves[,A.move:(A),i,]<-sapply(Pops[t,A.move:(A),i,],rmultinom,n=1,prob=moveProbs[i,])#;sum(moves[,,i,])
       
     }
-# 
-#Redistribute the Fish after Movement
-  for(j in 1:n.sim){
-    for(i in 1:n.pops){
-    #Pops[t,,i,j]<-rowSums(moves[i,,1:n.pops,j])
-    Pops[t,A.move:(A),i,j]<-rowSums(moves[i,A.move:(A),,j])
+    # 
+    #Redistribute the Fish after Movement
+    for(j in 1:n.sim){
+      for(i in 1:n.pops){
+        Pops[t,A.move:(A),i,j]<-rowSums(moves[i,A.move:(A),,j])
+      }
     }
-  }
-
+    
  }
   
     

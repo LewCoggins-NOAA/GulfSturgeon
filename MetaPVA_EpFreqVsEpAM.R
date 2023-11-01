@@ -161,21 +161,16 @@ for (j in 1:n.sim){
 
 #Compute the rest of the population dynamics
 for(t in 2:nT){
-    #episotic events
-#    ep.S <- rep(1,(A-AR+1))
-    
+
     for(i in 1:n.pops){
-      #Pops[t,AR,i,] <- rbinom(n.sim,as.integer(pmax(0,EtPops[t-1,i,])),pmin(R.A[i]*anom[t-1,i,]/(1+R.B[i]*EtPops[t-1,i,]),1))
-      Pops[t,AR,i,] <- as.integer((R.A[i]*EtPops[t-1,i,]*anom[t-1,i,])/(1+R.B[i]*EtPops[t-1,i,]))
-      #Pops[t,AR,i] <- as.integer((R.A[i]*EtPops[t-1,i,j])/(1+R.B[i]*EtPops[t-1,i,j]))
-      
+      #Pops[t,AR,i,] <- rbinom(n.sim,as.integer(pmax(0,EtPops[t-1,i,])),pmin(R.A[i]*anom[t-1,i,]/(1+R.B[i]*EtPops[t-1,i,]),1)) #IBM Recruitment
+      Pops[t,AR,i,] <- as.integer((R.A[i]*EtPops[t-1,i,]*anom[t-1,i,])/(1+R.B[i]*EtPops[t-1,i,]))  #non-IBM Recruitment
+
       for(j in 1:n.sim){      
         Pops[t,(AR+1):A,i,j] <- rbinom(A-AR,as.integer(pmax(0,Pops[t-1,AR:(A-1),i,j])),ep.S[t-1,,j]*Sa[i,AR:(A-1)])  # survive fish to the next age
         EtPops[t,i,j] <- as.integer(sum(Pops[t,AR:A,i,j]*fec));#print(EtPops[t,i,j])
-        #moves[,,i,j]<-as.integer(sapply(Pops[t,,i,j],rmultinom,n=1,prob=moveProbs[i,]))
-        #moves[,A.move:(A),i,j]<-sapply(Pops[t,A.move:(A),i,j],rmultinom,n=1,prob=moveProbs[i,])
+        #moves[,A.move:(A),i,j]<-sapply(Pops[t,A.move:(A),i,j],rmultinom,n=1,prob=moveProbs[i,]) #this is a redundant line that computes movement within simulation loop, I think doing it this way is slightly slower than computing movement outside the simulation loop as below
       }
-      #moves[,,i,]<-sapply(Pops[t,,i,],rmultinom,n=1,prob=moveProbs[i,])
       moves[,A.move:(A),i,]<-sapply(Pops[t,A.move:(A),i,],rmultinom,n=1,prob=moveProbs[i,])#;sum(moves[,,i,])
       
     }
@@ -183,14 +178,12 @@ for(t in 2:nT){
 #Redistribute the Fish after Movement
   for(j in 1:n.sim){
     for(i in 1:n.pops){
-    #Pops[t,,i,j]<-rowSums(moves[i,,1:n.pops,j])
     Pops[t,A.move:(A),i,j]<-rowSums(moves[i,A.move:(A),,j])
     }
   }
 
  }
   
-    
 
 for(j in 1:n.sim){      
   Abun.Results[,,j]<-apply(Pops[,,,j],3,rowSums)
@@ -201,8 +194,7 @@ for(j in 1:n.sim){
 #Compute probability of the number of populations becoming extirpated  
   numpops.ext=rowSums(Extir.Results)
   prop.extir=sapply(0:(n.pops),function(i)1-length(numpops.ext[numpops.ext<=i])/n.sim);prop.extir
-  #prop.extir=sapply(0:(n.pops),function(i)length(numpops.ext[numpops.ext<=i]));prop.extir
-  
+
   #proportion below adult starting abundance at 25 to get a probability of decline
   Nadult20to25=matrix(NA,n.pops,n.sim)
   Nadult20to25=apply(Adult.Results[20:25,,],3,colMeans)
@@ -225,7 +217,6 @@ for(j in 1:n.sim){
   
   
   
-  
 runtime <- Sys.time()-start
 print(runtime)    
 
@@ -240,7 +231,6 @@ numepfreqVals=5
 numepAM=11
 epAM=rep(seq(.25,.75,length=numepAM),numepfreqVals)
 epfreq=rep(seq(5,25,by=5),each=numepAM)
-
 
 # set number of cores to use
 ncpu = 14
