@@ -4,7 +4,7 @@
 ### examine multi stock performance objectives
 #This version allows specification of minimum age of movement movement
 
-#explores Madult versus RecK
+#explores No versus RecK
 
 #this version includes parallel processing
 
@@ -39,13 +39,12 @@ getLHpars <- function(LHdf=NULL){
 #moveProbs<-diag(n.pops)
 
 
-MetaPVA<-function(RecK,AM.Factor){
+MetaPVA<-function(RecK,NAduEq.Factor){
   
   start <- Sys.time()
   cat("Calculating population projections ...\n")
  
   #reck <- 3
-  #AM.Factor<-0.75
 
   nT <- controls$nT
   n.sim <- controls$n.sim
@@ -62,18 +61,19 @@ MetaPVA<-function(RecK,AM.Factor){
   opt <- controls$opt
   extir.threshold<-controls$extir.threshold
   
-  R0 <- parameters$R0                   # unfished equilibrium recruitment
-#  reck <- parameters$reck               # recruitment compensation ratio
-  reck <- RecK;print(reck)                          # recruitment compensation ratio
+  #R0 <- parameters$R0                   # unfished equilibrium recruitment
+  # reck <- parameters$reck              # recruitment compensation ratio
+  reck <- RecK;print(reck)              # recruitment compensation ratio
   K <- parameters$K                     # von Bertalanffy metabolic parameter
   Madult <- parameters$Madult           # vector of age-specific survival (after age at recruitment) [length=A-AR+1]
-  Madult<-AM.Factor*Madult;print(AM.Factor)              # Madult modification
+  # Madult <-AM.Factor*Madult;print(AM.Factor)  # Madult modification
   lh <- parameters$lh                   # length at 50% capture probability (logistic function)
   afec <- parameters$afec               # slope of fecundity-weight relationship
   Wmat <- parameters$Wmat               # weight at maturity
   Ms <- parameters$Ms                   # maximum survival by stanza
   Bs <- parameters$Bs                   # stanza-specific density effect (can be interpreted as amount of available habitat)
   No <- parameters$No                   # initial vulnerable abundance (used to create initial population)
+ #No <- No                               # No modification
   sd.S <- parameters$sd.S               # standard deviation of environmental effect on survival
   n.pops<-parameters$n.pops             # number of populations 
   A.move<-parameters$age.move           # minimum age of fish that move between rivers  pear<-parameters$move.pear
@@ -91,7 +91,9 @@ MetaPVA<-function(RecK,AM.Factor){
                       choc,
                       apal,
                       suwa),n.pops,n.pops,byrow=T)  # Movement probability matrix
-  NadultEq=parameters$NaduEq
+  
+  Nadu.eq<-parameters$NaduEq
+  Nadu.eq<-Nadu.eq*NAduEq.Factor
   
   
   age <- AR:A                                     # ages
@@ -116,6 +118,9 @@ MetaPVA<-function(RecK,AM.Factor){
     Rinit[j]<-No[j]/sum(lx[j,])
     PopN1[j]<-sum(Rinit[j]*lx[j,])             # initial abundance
   }
+  
+  #This part computes R0 from Nadu.eq 
+  R0<-Nadu.eq/rowSums(lx[,amat:A])
   
   R.A <- reck/phie                                # alpha of recruitment function 
   R.B <- (reck-1)/(R0*phie)                       # beta of Beverton-Holt recruitment function for each population
@@ -158,28 +163,29 @@ for (j in 1:n.sim){
   moves<-array(NA,c(n.pops,A,n.pops,n.sim))
 
 #Compute the rest of the population dynamics
-  for(t in 2:nT){
-    
+for(t in 2:nT){
+
     for(i in 1:n.pops){
-      #Pops[t,AR,i,] <- rbinom(n.sim,as.integer(pmax(0,EtPops[t-1,i,])),pmin(R.A[i]*anom[t-1,i,]/(1+R.B[i]*EtPops[t-1,i,]),1)) #IBM Recruitment
-      Pops[t,AR,i,] <- as.integer((R.A[i]*EtPops[t-1,i,]*anom[t-1,i,])/(1+R.B[i]*EtPops[t-1,i,]))  #non-IBM Recruitment
+      #Pops[t,AR,i,] <- rbinom(n.sim,as.integer(pmax(0,EtPops[t-1,i,])),pmin(R.A[i]*anom[t-1,i,]/(1+R.B[i]*EtPops[t-1,i,]),1))
+      Pops[t,AR,i,] <- as.integer((R.A[i]*EtPops[t-1,i,]*anom[t-1,i,])/(1+R.B[i]*EtPops[t-1,i,]))
+      #Pops[t,AR,i] <- as.integer((R.A[i]*EtPops[t-1,i,j])/(1+R.B[i]*EtPops[t-1,i,j]))
       
       for(j in 1:n.sim){      
         Pops[t,(AR+1):A,i,j] <- rbinom(A-AR,as.integer(pmax(0,Pops[t-1,AR:(A-1),i,j])),ep.S[t-1,,j]*Sa[i,AR:(A-1)])  # survive fish to the next age
         EtPops[t,i,j] <- as.integer(sum(Pops[t,AR:A,i,j]*fec));#print(EtPops[t,i,j])
-        #moves[,A.move:(A),i,j]<-sapply(Pops[t,A.move:(A),i,j],rmultinom,n=1,prob=moveProbs[i,]) #this is a redundant line that computes movement within simulation loop, I think doing it this way is slightly slower than computing movement outside the simulation loop as below
+        #moves[,A.move:(A),i,j]<-sapply(Pops[t,A.move:(A),i,j],rmultinom,n=1,prob=moveProbs[i,])  #this is a redundant line that computes movement within simulation loop, I think doing it this way is slightly slower than computing movement outside the simulation loop as below
       }
       moves[,A.move:(A),i,]<-sapply(Pops[t,A.move:(A),i,],rmultinom,n=1,prob=moveProbs[i,])#;sum(moves[,,i,])
       
     }
-    # 
-    #Redistribute the Fish after Movement
-    for(j in 1:n.sim){
-      for(i in 1:n.pops){
-        Pops[t,A.move:(A),i,j]<-rowSums(moves[i,A.move:(A),,j])
-      }
+# 
+#Redistribute the Fish after Movement
+  for(j in 1:n.sim){
+    for(i in 1:n.pops){
+    Pops[t,A.move:(A),i,j]<-rowSums(moves[i,A.move:(A),,j])
     }
-    
+  }
+
  }
   
     
@@ -229,18 +235,21 @@ return(out)
 
 
 numRecKVals=5
-numAM.FactorVals=5
-AM.Factor=rep(seq(0.5,1.5,length=numAM.FactorVals),numRecKVals)
-RecK=rep(seq(2,6,by=1),each=numAM.FactorVals)
+numNAduEq.FactorVals=5
+NAduEq.Factor=rep(seq(0.5,1.5,length=numNAduEq.FactorVals),numRecKVals)
+RecK=rep(seq(2,6,by=1),each=numNAduEq.FactorVals)
 
 # set number of cores to use
-ncpu = 14
+library(parallel)
+ncpu = detectCores()-2
+# ncpu = 14
 
 # makes each row a list element
 # we parLapply over this
 # will evaluate MetaPVA at each combination of epAM and epfreq
 # but each call to MetaPVA happens on a different core
-lh_params_list = lapply(1:(numRecKVals * numAM.FactorVals), function(i) c(AM.Factor = AM.Factor[i], RecK = RecK[i]))
+# lh_params_list = lapply(1:(numRecKVals * numAM.FactorVals), function(i) c(AM.Factor = AM.Factor[i], RecK = RecK[i]))
+lh_params_list = lapply(1:(numRecKVals * numNAduEq.FactorVals), function(i) c(NAduEq.Factor = NAduEq.Factor[i], RecK = RecK[i]))
 
 # start a timer
 starttime = Sys.time()
@@ -263,7 +272,8 @@ response = snow::parLapply(my_cluster, x = lh_params_list, fun = function(lh_par
   controls <- list()
   parameters <- list()
   set.pars(Species)
-  MetaPVA(AM.Factor = lh_params["AM.Factor"], RecK = lh_params["RecK"])
+  MetaPVA(NAduEq.Factor = lh_params["NAduEq.Factor"], RecK = lh_params["RecK"])
+  # MetaPVA(AM.Factor = lh_params["AM.Factor"], RecK = lh_params["RecK"])
 })
 
 # stop the cluster and timer
@@ -276,15 +286,30 @@ Extir.Res = lapply(1:length(response), function(i) response[[i]]$Extir.Res)
 Decline.Res = lapply(1:length(response), function(i) response[[i]]$Decline.Res)
 MeanAge.Res = lapply(1:length(response), function(i) response[[i]]$MeanAge.Res)
 
+#Get Control and Parameter values to main environment
+Species <- "GulfSturgeon"
+controls <- list()
+parameters <- list()
+set.pars(Species)
+n.pops<-parameters$n.pops
+Nadu.eq<-parameters$NaduEq
 
-ProbExt1orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[1]),numAM.FactorVals,numRecKVals)
-ProbExt2orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[2]),numAM.FactorVals,numRecKVals)
-ProbExt3orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[3]),numAM.FactorVals,numRecKVals)
-ProbExt4orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[4]),numAM.FactorVals,numRecKVals)
-ProbExt5orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[5]),numAM.FactorVals,numRecKVals)
-ProbExt6orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[6]),numAM.FactorVals,numRecKVals)
-ProbExtEQ7=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[7]),numAM.FactorVals,numRecKVals)
+ProbExt1orMore=matrix(sapply(1:(numRecKVals * numNAduEq.FactorVals),function(i)response[[i]]$PropExt.Res[1]),numNAduEq.FactorVals,numRecKVals)
+ProbExt2orMore=matrix(sapply(1:(numRecKVals * numNAduEq.FactorVals),function(i)response[[i]]$PropExt.Res[2]),numNAduEq.FactorVals,numRecKVals)
+ProbExt3orMore=matrix(sapply(1:(numRecKVals * numNAduEq.FactorVals),function(i)response[[i]]$PropExt.Res[3]),numNAduEq.FactorVals,numRecKVals)
+ProbExt4orMore=matrix(sapply(1:(numRecKVals * numNAduEq.FactorVals),function(i)response[[i]]$PropExt.Res[4]),numNAduEq.FactorVals,numRecKVals)
+ProbExt5orMore=matrix(sapply(1:(numRecKVals * numNAduEq.FactorVals),function(i)response[[i]]$PropExt.Res[5]),numNAduEq.FactorVals,numRecKVals)
+ProbExt6orMore=matrix(sapply(1:(numRecKVals * numNAduEq.FactorVals),function(i)response[[i]]$PropExt.Res[6]),numNAduEq.FactorVals,numRecKVals)
+ProbExtEQ7=matrix(sapply(1:(numRecKVals * numNAduEq.FactorVals),function(i)response[[i]]$PropExt.Res[7]),numNAduEq.FactorVals,numRecKVals)
 ProbExtEQ0=1-ProbExt1orMore
+# ProbExt1orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[1]),numAM.FactorVals,numRecKVals)
+# ProbExt2orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[2]),numAM.FactorVals,numRecKVals)
+# ProbExt3orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[3]),numAM.FactorVals,numRecKVals)
+# ProbExt4orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[4]),numAM.FactorVals,numRecKVals)
+# ProbExt5orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[5]),numAM.FactorVals,numRecKVals)
+# ProbExt6orMore=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[6]),numAM.FactorVals,numRecKVals)
+# ProbExtEQ7=matrix(sapply(1:(numRecKVals * numAM.FactorVals),function(i)response[[i]]$PropExt.Res[7]),numAM.FactorVals,numRecKVals)
+# ProbExtEQ0=1-ProbExt1orMore
 
 # calculate extirpation probabilities
 # ready to be passed to the remainder of the summary prep/plotting code
@@ -292,34 +317,36 @@ ProbExtEQ0=1-ProbExt1orMore
 extir = sapply(Extir.Res, colMeans)
 
 
-RecruitmentCompensation=matrix(RecK,numAM.FactorVals,numRecKVals)[1,]
-AdultMortalityFactor=rep(AM.Factor[1:numAM.FactorVals],numRecKVals)
+RecruitmentCompensation=matrix(RecK,numNAduEq.FactorVals,numRecKVals)[1,]
+EquilibriumAdultAbundFactor=rep(NAduEq.Factor[1:numNAduEq.FactorVals],numRecKVals)
+EqAduAbun=matrix(NA,n.pops,length(EquilibriumAdultAbundFactor))
+for(i in 1:7){EqAduAbun[i,]=round(matrix(EquilibriumAdultAbundFactor,n.pops,length(EquilibriumAdultAbundFactor),byrow=TRUE)[i,]*Nadu.eq[i])}
 
-Pearl_ProbabilityExtripation100Years=matrix(extir[1,],numAM.FactorVals,numRecKVals)
-Pascagoula_ProbabilityExtripation100Years =matrix(extir[2,],numAM.FactorVals,numRecKVals)
-Escambia_ProbabilityExtripation100Years =matrix(extir[3,],numAM.FactorVals,numRecKVals)
-Yellow_ProbabilityExtripation100Years =matrix(extir[4,],numAM.FactorVals,numRecKVals)
-Choctawhatchee_ProbabilityExtripation100Years =matrix(extir[5,],numAM.FactorVals,numRecKVals)
-Apalachicola_ProbabilityExtripation100Years =matrix(extir[6,],numAM.FactorVals,numRecKVals)
-Suwannee_ProbabilityExtripation100Years =matrix(extir[7,],numAM.FactorVals,numRecKVals)
+Pearl_ProbabilityExtripation100Years=matrix(extir[1,],numNAduEq.FactorVals,numRecKVals)
+Pascagoula_ProbabilityExtripation100Years =matrix(extir[2,],numNAduEq.FactorVals,numRecKVals)
+Escambia_ProbabilityExtripation100Years =matrix(extir[3,],numNAduEq.FactorVals,numRecKVals)
+Yellow_ProbabilityExtripation100Years =matrix(extir[4,],numNAduEq.FactorVals,numRecKVals)
+Choctawhatchee_ProbabilityExtripation100Years =matrix(extir[5,],numNAduEq.FactorVals,numRecKVals)
+Apalachicola_ProbabilityExtripation100Years =matrix(extir[6,],numNAduEq.FactorVals,numRecKVals)
+Suwannee_ProbabilityExtripation100Years =matrix(extir[7,],numNAduEq.FactorVals,numRecKVals)
 
 contours = list(showlabels = TRUE,start = 0,end = 1,labelfont = list(size = 12, color = "lightgray"))
-fig=plot_ly(z=~Pearl_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Pascagoula_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Escambia_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Yellow_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Choctawhatchee_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Apalachicola_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~Suwannee_ProbabilityExtripation100Years,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Pearl_ProbabilityExtripation100Years,y=~EqAduAbun[1,],x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Pascagoula_ProbabilityExtripation100Years,y=~EqAduAbun[2,],x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Escambia_ProbabilityExtripation100Years,y=~EqAduAbun[3,],x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Yellow_ProbabilityExtripation100Years,y=~EqAduAbun[4,],x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Choctawhatchee_ProbabilityExtripation100Years,y=~EqAduAbun[5,],x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Apalachicola_ProbabilityExtripation100Years,y=~EqAduAbun[6,],x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Suwannee_ProbabilityExtripation100Years,y=~EqAduAbun[7,],x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
 
-fig=plot_ly(z=~ProbExtEQ0,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt1orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt2orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt3orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt4orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt5orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExt6orMore,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
-fig=plot_ly(z=~ProbExtEQ7,y=~AdultMortalityFactor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExtEQ0,y=~NAduEq.Factor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt1orMore,y=~NAduEq.Factor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt2orMore,y=~NAduEq.Factor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt3orMore,y=~NAduEq.Factor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt4orMore,y=~NAduEq.Factor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt5orMore,y=~NAduEq.Factor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt6orMore,y=~NAduEq.Factor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExtEQ7,y=~NAduEq.Factor,x=~RecruitmentCompensation,type="contour",colors="Greys",contours=contours);fig
 
 
 
@@ -355,6 +382,15 @@ fig=plot_ly(z=~ProbExtEQ7,y=~AdultMortalityFactor,x=~RecruitmentCompensation,typ
 # fig1
 
 
+matplot(response[[1]]$Adult.Res[,,1],type='l');abline(h=50,lwd=2,col='red')
+matplot(response[[12]]$Adult.Res[,,1],type='l');abline(h=50,lwd=2,col='red')
+matplot(response[[25]]$Adult.Res[,,1],type='l');abline(h=50,lwd=2,col='red')
 
 
+matplot(response[[1]]$Adult.Res[,1,],type='l');abline(h=50,lwd=2,col='red')
+matplot(response[[12]]$Adult.Res[,1,],type='l');abline(h=50,lwd=2,col='red')
+matplot(response[[25]]$Adult.Res[,1,],type='l');abline(h=50,lwd=2,col='red')
 
+matplot(response[[1]]$Adult.Res[,7,],type='l');abline(h=50,lwd=2,col='red')
+matplot(response[[12]]$Adult.Res[,7,],type='l');abline(h=50,lwd=2,col='red')
+matplot(response[[25]]$Adult.Res[,7,],type='l');abline(h=50,lwd=2,col='red')

@@ -1,5 +1,5 @@
 Parameter,Value,Definition
-R0,1832;1869;492;327;461;537;655,unfished recruitment at equilibrium of each popululation
+R0,1832;1869;498;327;461;537;655,unfished recruitment at equilibrium of each popululation
 reck,2.8,recruitment compensation ratio - the difference in juvenile survival between unfished and near zero density
 K,0.13,von Bertalanffy 'growth' parameter
 Madult,0.274;0.139;0.139;0.139;0.117;0.117;0.117;,mortality of fish at Linf
@@ -20,6 +20,7 @@ move.yell,0;.005;.13;.77;.09;.005;0, movement from the Yellow river
 move.choc,0;.005;.03;.03;.92;.015;0, movement from the Choctawawhatchee river
 move.apal,0;0;.01;.01;.03;.94;.01, movement from the Apalachicola river
 move.suwa,0;0;0;0;0;.01;.99, movement from the Suwannee river
+NaduEq,267;2871;765;503;1115;1297;1584,Equilibrium number of  Adult fish in the population
 
 
 
