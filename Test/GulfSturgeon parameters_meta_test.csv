@@ -1,0 +1,26 @@
+Parameter,Value,Definition
+reck,2.8,recruitment compensation ratio - the difference in juvenile survival between unfished and near zero density
+K,0.13,von Bertalanffy 'growth' parameter
+Madult,0.274;0.139;0.139;0.139;0.117;0.117;0.117;,mortality of fish at Linf
+lh,0,length at 50% capture probability (as a proportion of Linf)
+lsd,0.0001,slope of logistic function at 50% capture probability
+afec,100000,fecundity multiplier on weight
+Wmat,0.15,"minimum weight, at maturity"
+Ms,1,maximum survival for each pre-recruit stanza
+Bs,1,relative available habitat for each pre-recruit stanza
+No,166;129;330;2962;2183;1359;6295,initial number of adult fish in the population
+sd.S,0.6,standard deviation in recruitment across years
+n.pops,7,number of populations
+age.move,7,minimum age of fish that move between rivers
+move.pear,.88;.12;0;0;0;0;0, movement from the Pearl river
+move.pasc,.02;.95;0.02;0.005;0.005;0;0, movement from the Pascagula river
+move.esca,0;0.015;.66;.21;.1;.015;0, movement from the Escambia river
+move.yell,0;.005;.13;.77;.09;.005;0, movement from the Yellow river
+move.choc,0;.005;.03;.03;.92;.015;0, movement from the Choctawawhatchee river
+move.apal,0;0;.01;.01;.03;.94;.01, movement from the Apalachicola river
+move.suwa,0;0;0;0;0;.01;.99, movement from the Suwannee river
+NaduEq,594;6460;1722;503;1115;1297;1584,Equilibrium number of  Adult fish in the population
+
+
+
+
