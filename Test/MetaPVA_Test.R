@@ -96,8 +96,8 @@ MetaPVA<-function(fact1,fact2){
   #Nadu.eq<-rep(500,n.pops)
   #moveProbs=diag(n.pops)
   #Madult=rep(.25,n.pops)
-  #reck <- reck*fact2                   
-  Madult <-Madult*fact2              
+  reck <- reck*fact2                   
+  #Madult <-Madult*fact2              
   Nadu.eq<-Nadu.eq*fact1
   
   
@@ -226,11 +226,6 @@ for(j in 1:n.sim){
     meanAge[t,]=rowMeans(temp[t,,])
   }
   
-  
-  
-  
-  
-  
 runtime <- Sys.time()-start
 print(runtime)    
 
@@ -242,8 +237,8 @@ return(out)
 
 
 numfact1Vals=5
-numfact2Vals=10
-fact1=rep(seq(0.5,1.5,length=numfact1Vals),numfact2Vals)
+numfact2Vals=5
+fact1=rep(seq(0.1,0.5,length=numfact1Vals),numfact2Vals)
 fact2=rep(seq(0.5,1.5,length=numfact2Vals),each=numfact1Vals)
 
 # set number of cores to use
@@ -330,20 +325,20 @@ Suwannee_ProbabilityExtripation100Years =matrix(extir[7,],numfact2Vals,numfact1V
 contours = list(showlabels = TRUE,start = 0,end = 1,labelfont = list(size = 12, color = "lightgray"))
 fig=plot_ly(z=~Pearl_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
 fig=plot_ly(z=~Pascagoula_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~Escambia_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~Yellow_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~Choctawhatchee_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~Apalachicola_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~Suwannee_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Escambia_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Yellow_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Choctawhatchee_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Apalachicola_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~Suwannee_ProbabilityExtripation100Years,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
 
-#fig=plot_ly(z=~ProbExtEQ0,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-#fig=plot_ly(z=~ProbExt1orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-#fig=plot_ly(z=~ProbExt2orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~ProbExt3orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~ProbExt4orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~ProbExt5orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~ProbExt6orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
-# fig=plot_ly(z=~ProbExtEQ7,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExtEQ0,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt1orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt2orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt3orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt4orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt5orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExt6orMore,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
+fig=plot_ly(z=~ProbExtEQ7,y=~fact1,x=~fact2,type="contour",colors="Greys",contours=contours);fig
 
 
 

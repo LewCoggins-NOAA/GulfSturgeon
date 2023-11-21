@@ -3,11 +3,11 @@ nT,100,number of years
 A,60,number of ages
 nS,1,number of juvenile stanzas
 AR,1,age at recruitment
-n.sim,40,number of simulations
+n.sim,100,number of simulations
 h.st,0,proportion of each pre-recruit stanza removed for stocking (separated by semicolons - number must equal number of stanzas)
-ep.fr,1000,frequency of episodic mortality
+ep.fr,5,frequency of episodic mortality
 ep.J.M,.0,relative juvenile mortality during episodes of mortality
-ep.A.M,.35,relative adult mortality during episodes of mortality
+ep.A.M,.1,relative adult mortality during episodes of mortality
 recfail,0,probability of recruitment failure (from 0-1)
 ep.spr,0,probability of springs running dry (from 0-1)
 ep.fec,1,the proportional reduction in fecundity associated with spring drying
