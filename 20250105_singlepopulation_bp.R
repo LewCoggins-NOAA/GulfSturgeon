@@ -24,9 +24,9 @@ AR    <- 1       # recruitment age (age class recruits enter)
 n_sim <- 2000    # number of simulations (>=500 recommended for probability work)
 
 # Episodic event settings
-epfreq <- 10     # years between episodic events (smaller => more frequent)
-epAM   <- 0.50   # adult episodic mortality severity (0 to 1), adult survival reduced by X% in episodic years
-epJM   <- 0.20   # subadult episodic mortality severity (0 to 1)
+epfreq <- 10    # years between episodic events (smaller => more frequent)
+epAM   <- 0.10   # adult episodic mortality severity (0 to 1), adult survival reduced by X% in episodic years
+epJM   <- 0.10   # subadult episodic mortality severity (0 to 1)
 
 # Extirpation definition (adult threshold)
 extir_threshold <- 50
@@ -43,10 +43,10 @@ sd_S <- 0.6
 # ------------------------------------------------------------
 
 # # Example
- pop_name <- "Example"
- R0       <- 10000
- Madult   <- 0.15
- No       <- 5000
+# pop_name <- "Example"
+# R0       <- 10000
+# Madult   <- 0.15
+# No       <- 5000
 
 # # Pearl
 # pop_name <- "Pearl"
@@ -55,10 +55,10 @@ sd_S <- 0.6
 # No       <- 797
 
 # # Pascagoula
-# pop_name <- "Pascagoula"
-# R0       <- 1869
-# Madult   <- 0.139
-# No       <- 161
+ pop_name <- "Pascagoula"
+ R0       <- 1869
+ Madult   <- 0.139
+ No       <- 161
 
 # # Escambia
 # pop_name <- "Escambia"
