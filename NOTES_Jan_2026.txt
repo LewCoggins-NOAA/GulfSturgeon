@@ -1,0 +1,23 @@
+Columns in the CSV that is now written
+
+pop_name
+Text label for the population you ran (e.g., “Pascagoula”). Same value repeated on every row.
+
+sim
+Simulation index (1 to n_sim). Each row corresponds to one Monte Carlo replicate.
+
+init_total_age1plus
+Total number of female fish initialized at age 1 and older (ages 1–A).
+In practice this is the full modeled population size at Year 1 (since the model starts at age 1).
+
+init_vulnerable_ageplus
+Total number of female fish at age vuln_age and older (ages vuln_age–A).
+This is what the script treats as “vulnerable abundance” for reporting and scaling (e.g., if vuln_age = 4, then it’s females age 4+).
+
+init_adults_ageplus
+Total number of female fish at age amat and older (ages amat–A).
+This is the “adult” abundance used in the extirpation endpoint (min adults ≤ threshold).
+
+adult_frac_within_vulnerable
+The fraction of vulnerable fish that are adults at initialization:
+
