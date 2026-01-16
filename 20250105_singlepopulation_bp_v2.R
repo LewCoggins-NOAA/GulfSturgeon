@@ -47,9 +47,11 @@ vuln_age <- 4    # "vulnerable abundance" refers to females age vuln_age+
 
 
 # Episodic event settings
-epfreq <- 10     # years between episodic events (smaller => more frequent things happen)
-epAM   <- 0.1   # adult episodic mortality severity (0 to 1) in episodic years, adult survival is multiplied by (1-epAM)
-epJM   <- 0.1   # subadult episodic mortality severity (0 to 1) in episodic years, subadult survival is multiplied by (1-epJM)
+epfreq <- 5     # years between episodic events (smaller => more frequent things happen)
+epAM   <- 0.01   # adult episodic mortality severity (0 to 1) in episodic years, adult survival is multiplied by (1-epAM)
+epJM   <- 0.01   # subadult episodic mortality severity (0 to 1) in episodic years, subadult survival is multiplied by (1-epJM)
+
+#juv to 0.4 then 0.8 then add adult to 0.1
 
 # Extirpation definition (adult threshold)
 extir_threshold <- 50
@@ -85,10 +87,10 @@ plot_B_file <- NA_character_
 # ------------------------------------------------------------
 
 # # Example
-# pop_name <- "Example"
-# R0       <- 10000
-# Madult   <- 0.15
-# No       <- 5000
+ pop_name <- "Example"
+ R0       <- 1000
+ Madult   <- 0.10
+ No       <- 5000
 
 # # Pearl
 # pop_name <- "Pearl"
@@ -98,9 +100,9 @@ plot_B_file <- NA_character_
 
 # # Pascagoula
 #pop_name <- "Pascagoula"
-R0       <- 1869
-Madult   <- 0.139
-No       <- 161
+#R0       <- 1869
+#Madult   <- 0.139
+#No       <- 161
 
 # # Escambia
 # pop_name <- "Escambia"
@@ -127,10 +129,10 @@ No       <- 161
 # No       <- 1359
 
 # # Suwannee
- pop_name <- "Suwannee"
- R0       <- 655
- Madult   <- 0.117
- No       <- 6295
+# pop_name <- "Suwannee"
+# R0       <- 655
+# Madult   <- 0.117
+# No       <- 6295
 
 
 # ============================================================
