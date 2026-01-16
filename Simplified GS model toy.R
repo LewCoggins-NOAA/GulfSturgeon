@@ -1,12 +1,12 @@
 # ============================================================
-# Gulf Sturgeon – Simple Age-Structured Model (SturMod-lite)
+# Gulf Sturgeon – Simple Age-Structured Model (SturMod-lite from FloPop/Brett)
 # Purpose:
-#   Small population (~2000 total fish) with SturMod life history.
+#   Small population (~ABCDE total fish) with SturMod life history.
 #   Compare benefits to adult abundance (age ≥ 10) from:
 #     (1) Increasing recruitment (R0 up)
 #     (2) Decreasing adult mortality (Z down)
 # Years: 2000–2075
-# 500 simulations per scenario; plots show mean + 95% CI across sims.
+# 100 simulations per scenario; plots show mean + 95% CI across sims.
 # ============================================================
 
 library(tidyverse)
@@ -65,7 +65,7 @@ Length_Z   <- Length
 Length_Z[ages >= flat_age] <- Length[flat_age]
 
 # ------------------------------------------------------------
-# CALIBRATE BASELINE R0 TO GET ~2000 TOTAL FISH AT EQUILIBRIUM
+# CALCULATE BASELINE R0 TO GET ~5000 TOTAL FISH AT EQUILIBRIUM
 # ------------------------------------------------------------
 
 Mu0  <- M_base * (Linf / Length_Z)
@@ -81,7 +81,7 @@ M_factor_down <- 0.95   # 5% improvement multiply M_base by this after change_ye
 M_low         <- M_base * M_factor_down
 
 # ----------------------------
-# CORE GULF STURGEON MODEL RUNNER (single stochastic run)
+# CORE GULF STURGEON MODEL 
 # ----------------------------
 run_model_GS <- function(M_vec, Ro_vec, label) {
   
@@ -138,7 +138,7 @@ run_model_GS <- function(M_vec, Ro_vec, label) {
 }
 
 # ----------------------------
-# HELPER: SIMULATE MANY RUNS FOR ONE SCENARIO
+# SIMULATE RUNS FOR ONE SCENARIO
 # ----------------------------
 simulate_scenario <- function(M_vec, Ro_vec, label) {
   out <- vector("list", n_sims)
